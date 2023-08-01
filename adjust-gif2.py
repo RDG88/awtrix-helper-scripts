@@ -6,11 +6,14 @@ import asyncio
 import sys
 import os
 from datetime import timedelta
-
+# Defines the default AWTRIX device ip adres
 DEFAULT_ENDPOINT_IP = "ulanzi3.graafnet.nl"
-DEFAULT_BORDER_WIDTH = 1
+# Defines the border width around the pixels, will only be shown in the outputted gif, not in the live preview.
+DEFAULT_BORDER_WIDTH = 0
+# Defines the output gif filename.
 DEFAULT_GIF_FILENAME = "output.gif"
-# Width x Height can be: 2048x512 / 1024x256 / 512x128 / 256x64 / 128x32 / 64x16 / 32x8
+# Defines the Width x Height of the outputted gif, will not been shown in the live preview.
+# Can be: 2048x512 / 1024x256 / 512x128 / 256x64 / 128x32 / 64x16 / 32x8
 DEFAULT_GIF_WIDTH = 512
 DEFAULT_GIF_HEIGHT = 128
 
