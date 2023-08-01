@@ -1,6 +1,6 @@
 import requests
 import time
-from PIL import Image, ImageDraw, ImageSequence
+from PIL import Image, ImageDraw
 from typing import List
 import asyncio
 import sys
@@ -8,8 +8,13 @@ import os
 from datetime import timedelta
 
 DEFAULT_ENDPOINT_IP = "ulanzi3.graafnet.nl"
-DEFAULT_BORDER_WIDTH = 3
+DEFAULT_BORDER_WIDTH = 1
 DEFAULT_GIF_FILENAME = "output.gif"
+# Width x Height can be: 2048x512 / 1024x256 / 512x128 / 256x64 / 128x32 / 64x16 / 32x8
+DEFAULT_GIF_WIDTH = 512
+DEFAULT_GIF_HEIGHT = 128
+
+
 
 class ScreenCapture:
     def __init__(
@@ -20,6 +25,8 @@ class ScreenCapture:
         gif_filename: str,
         initial_duration: int,
         max_duration: int,
+        new_width: int,
+        new_height: int,
         live_preview: bool = True,
     ) -> None:
         self.endpoint_url = endpoint_url
@@ -28,6 +35,8 @@ class ScreenCapture:
         self.gif_filename = gif_filename
         self.initial_duration = initial_duration
         self.max_duration = max_duration
+        self.new_width = new_width
+        self.new_height = new_height
         self.live_preview = live_preview
         self.gif_frames: List[Image.Image] = []
 
@@ -78,7 +87,11 @@ class ScreenCapture:
                 # Print live preview if enabled
                 if self.live_preview:
                     self.print_live_preview(frame_count, image)
-
+                
+                # Resize image if necessary
+                if self.width != self.new_width or self.height != self.new_height:
+                    image = image.resize((self.new_width, self.new_height), Image.ANTIALIAS)
+                
                 # Add the current frame to the GIF
                 self.gif_frames.append(image)
                 frame_count += 1
@@ -135,28 +148,6 @@ class ScreenCapture:
         else:
             print("\nNo frames captured. GIF not saved.")
 
-    def resize_gif(self, output_width: int, output_height: int, new_duration: int) -> None:
-        """Resize the saved GIF to the specified width and height."""
-        try:
-            gif = Image.open(self.gif_filename)
-
-            frames = []
-            for frame in ImageSequence.Iterator(gif):
-                frame = frame.resize((output_width, output_height), Image.LANCZOS)
-                frames.append(frame)
-
-            frames[0].save(
-                self.gif_filename,
-                format="GIF",
-                append_images=frames[1:],
-                save_all=True,
-                duration=new_duration,
-                loop=0,
-            )
-            print(f"GIF resized successfully to {output_width}x{output_height}.")
-        except Exception as e:
-            print(f"Failed to resize GIF: {e}")
-
 
 async def capture_loop(screen_capture: ScreenCapture) -> None:
     await screen_capture.capture_frame()
@@ -190,38 +181,28 @@ def main() -> None:
     initial_duration = 40  # in milliseconds (Approximately 25 frames per second)
     max_duration = 500  # in milliseconds
 
+    # New dimensions for the GIF
+    new_width = DEFAULT_GIF_WIDTH  # For example
+    new_height = DEFAULT_GIF_HEIGHT  # For example
+
+
     # Create ScreenCapture instance
     screen_capture = ScreenCapture(
-        endpoint_url, width, height, gif_filename, initial_duration, max_duration
+        endpoint_url, width, height, gif_filename, initial_duration, max_duration, new_width, new_height
     )
 
     # Prompt user to start capturing
     input("Press Enter to start capturing frames...")
 
-    # Start time
-    start_time = time.time()
-
-    # Create the event loop
+    # Capture frames in an asyncio loop
     loop = asyncio.get_event_loop()
-
-    # Run the capture loop
     try:
         loop.run_until_complete(capture_loop(screen_capture))
     except KeyboardInterrupt:
-        pass
-
-    # Save frames as GIF
-    screen_capture.save_as_gif()
-
-    # Resize the saved GIF to 512x128
-    screen_capture.resize_gif(512, 128, initial_duration * 6)
-
-    # End time
-    end_time = time.time()
-
-    # Calculate capture duration
-    capture_duration = end_time - start_time
-    print(f"Capture duration: {capture_duration:.2f} seconds")
+        print(f"\nInterrupted by user. \nSaving GIF.... \nGIF Resolution: {new_width}x{new_height}\nGIF Output: {gif_filename}\nAWTRIX Device: {endpoint_ip}")
+    finally:
+        # Save the frames as a GIF
+        screen_capture.save_as_gif()
 
 
 if __name__ == "__main__":
