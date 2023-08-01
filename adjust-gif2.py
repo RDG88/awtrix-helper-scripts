@@ -1,3 +1,5 @@
+## By the awesome idea of @Jeeftor https://github.com/jeeftor/HomeAssistant/blob/master/icons/dev/gifMaker.py
+
 import requests
 import time
 from PIL import Image, ImageDraw
